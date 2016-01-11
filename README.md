@@ -15,6 +15,7 @@ There is also a website version at http://thomasmyrman.se/dev/arbetsutdelningen/
 * This will only work if you are currently using Gmail to send emails.
 * There might be a warning about lxml but don't worry about it.
 * You must enable apps on Gmail by going here: https://www.google.com/settings/security/lesssecureapps
+* Of course, the script will never email the same people twice.
 
 
 #### Installing & use
