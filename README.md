@@ -4,7 +4,7 @@ Scan Arbetsförmedlingen for emails (Python)
 #### What does it do?
 Arbetsutdelningen is a Python script for Arbetsförmedlingen, a Swedish website that is for finding jobs. The script scans through job advertisements and finds all the emails, which can simplify the process of applying. It also automatically sends an application with your CV attached. With this script you can apply for hundreds of jobs in a matter of minutes.
 
-There is also a website version at http://thomasmyrman.se/dev/arbetsutdelningen/
+There is also a website version at http://dev.thomasmyrman.se/arbetsutdelningen/
 
 #### Dependencies
 * Python
