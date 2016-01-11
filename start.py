@@ -24,8 +24,8 @@ gmailPassword		= getpass.getpass('Gmail password: ')
 yag = yagmail.SMTP(gmailUsername, gmailPassword)
 
 cvLocation		= raw_input('Full file location for your CV in PDF/image format: ')
-subjectContent		= question('Subject line for emails sent to employers', 'JobbansÃ¶kan')
-defaultLink		= raw_input('To find emails you have to tell us what you are looking for. Open ArbetsfÃ¶rmedlingen, search for the jobs you want and paste the link here: ')
+subjectContent		= question('Subject line for emails sent to employers', 'Jobb')
+defaultLink		= raw_input('To find emails you have to tell us what you are looking for. Open Arbetsformedlingen, search for the jobs you want and paste the link here: ')
 searchMode		= question("""Type 'once' to only search once, or type 'flow' to keep searching and sending""", 'once')
 
 
