@@ -16,6 +16,7 @@ There is also a website version at http://dev.thomasmyrman.se/arbetsutdelningen/
 * There might be a warning about lxml but don't worry about it.
 * You must enable apps on Gmail by going here: https://www.google.com/settings/security/lesssecureapps
 * Of course, the script will never email the same people twice.
+* You might have to modify the permission for the file "blacklist". "chmod 777 blacklist" should work on Linux.
 
 
 #### Installing & use
