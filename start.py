@@ -30,10 +30,10 @@ searchMode		= question("""Type 'once' to only search once, or type 'flow' to kee
 
 
 def getBody():
-	with open('./emailcontent', 'r') as body:
+	with open('./email-content', 'r') as body:
 		body = body.read().replace('\n', '<br>')
 		if "{full-name}" in body:
-			sys.exit("You have not finished the setup. First edit the file called 'emailcontent' and change it to suit you.")
+			sys.exit("You have not finished the setup. First edit the file called 'email-content' and change it to suit you.")
 		else:
 			return body
 
