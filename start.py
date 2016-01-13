@@ -1,115 +1,61 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-# JavaScript booklet to find links based on CSS:
-# p=[];
-# var et=prompt("Type in css selector for links you wish to scrape for emails. Defaults to Arbetsf\u00f6rmedlingen.",'[id^="ctl00_mainCPH_ResultatlistaVy_Resultatlista_ct"][shape="rect"]');
-# for (var i in $(et)) {p.push($(et)[i].href);}console.log(p.join(','));
-#
 
-import yagmail, re, urllib2, getpass, sys
-from HTMLParser import HTMLParser
+import urllib2, re, sys, traceback
+from bs4 import BeautifulSoup
 
-def bolder(text): return '\033[1m' + text + '\033[0m'
+def writeToFile (email):
+	f = open("results", "a")
+	f.write(email.lower() + "\n")
+	print "Writing email to results file: " + email.lower() + ""
 
-def question(query, default):
-	if not default: raw_input(query + ': ') or sys.exit('Please write something valid.')
-	else: return raw_input(query + " [" + default + "]: ") or default
+def cleanFile():
+	lines = open("results", "r").readlines()
+	f  = open("results", "w")
+	for line in set(lines):
+		if line.strip != "":
+			f.write(line)
+	print "\nRemoving duplicates from results file."
 
-print """Lets begin! To get this working, we need to know some things. Default values are in brackets []. Hit enter to use them."""
+def raw_input_need (question):
+	answer = ""
+	while not answer: answer = raw_input(question)
+	return answer
 
-# Some of these bug unless you use raw_input without "or" statement
-gmailUsername		= raw_input('Gmail username: ')
-gmailPassword		= getpass.getpass('Gmail password: ')
-yag = yagmail.SMTP(gmailUsername, gmailPassword)
+def getEmails (url):
+	emails = list(set(re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}", urllib2.urlopen(url).read())))
+	return [s for s in emails if not "@academicwork" in s and not "@proffice.se" in s]
 
-cvLocation		= raw_input('Full file location for your CV in PDF/image format: ')
-subjectContent		= question('Subject line for emails sent to employers', 'Jobb')
-defaultLink		= raw_input('To find emails you have to tell us what you are looking for. Open Arbetsformedlingen, search for the jobs you want and paste the link here: ')
-searchMode		= question("""Type 'once' to only search once, or type 'flow' to keep searching and sending""", 'once')
+def startSearch (searchPage):
+	try:
+		soup = BeautifulSoup(urllib2.urlopen(searchPage).read(), "html5lib")
 
+		try:
+			nextPage = "http://www.arbetsformedlingen.se" + soup.findAll("a", {"title": "GÃ¥ till nÃ¤sta sida"})[0]["href"]
+			pageNumber = " (page " + str(int(nextPage.split("sida%28")[1].split("%")[0]) - 1) + ") "
+		except: nextPage, pageNumber = "", ""
 
-def getBody():
-	with open('./email-content', 'r') as body:
-		body = body.read().replace('\n', '<br>')
-		if "{full-name}" in body:
-			sys.exit("You have not finished the setup. First edit the file called 'email-content' and change it to suit you.")
-		else:
-			return body
+		if searchMode == "flow": print "\nContinuous search" + pageNumber + "...\n"
+		else: print "\nSingle page search...\n"
 
-if searchMode == 'once': print "This program will only run once."
-elif searchMode == 'flow': print "This program will run until you turn it off."
+		for link in soup.findAll("a", { "shape": "rect", "href": True, "style": True, "title": True, "id": True }):
+			if "ctl00_mainCPH_ResultatlistaVy_Resultatlista_ct" in link["id"]:
+				for email in getEmails("http://www.arbetsformedlingen.se" + link["href"]): writeToFile(email)
 
-allLinks, newPage, goToPage = [], '', ''
+		cleanFile()
+		if searchMode == "flow" and nextPage:
+			startSearch(nextPage)
+		else: print "\nFinished! Thank you. All results saved to 'results'."
+#	except: traceback.print_exc() # Debug
+	except Exception, e:
+		print "Something broke: %s" % e
+		getSettings()
 
-goToPage = defaultLink
-class MyHTMLParser(HTMLParser):
-	# Find pages to parse, and find link to next page when finished
-	def handle_starttag(self, tag, attrs):
-		global allLinks
-		global newPage
-		if tag == "a":
-			for name, value in attrs:
-				if name == "shape" and value == 'rect' and re.search('ctl00_mainCPH_ResultatlistaVy_Resultatlista_ct', attrs[1][1]):
-					newLink = str('http://www.arbetsformedlingen.se' + attrs[3][1])
-					allLinks.append(newLink)
-			for name, value in attrs:
-				if name == 'title' and re.search('sida', value) and re.search('till\sn', value):
-					newPage = attrs[1][1]
+def getSettings():
+	global searchPage, searchMode
+	keyWords  = raw_input("\nWrite some keywords for jobs you are looking for (elektriker, diskare, etc):\n")
+	searchPage = "http://www.arbetsformedlingen.se/For-arbetssokande/Lediga-jobb.html?url=-123388378%2FNy%2FSokPlatsannonser%2FSokPlatsannonser.aspx%3Fq%3Ds(sn(" + keyWords.replace(" ", "%2B") + ")utl(1)go(1)ao(180))%26ps%3D&sv.url=12.237ec53d11d47b612d78000171"
+	searchMode = raw_input("\nType 'flow' to search continuously, or hit enter to search a single page (20 ads per page):\n") or "once"
+	startSearch(searchPage)
 
-def blacklist(email):
-	contact = email.lower()
-	with open('./blacklist', 'r+') as blacklist:
-		if not contact in blacklist.read().splitlines():
-			blacklist.write(contact + '\n')
-			sendemail(email)
-			print "Email sent to: " + email + " and added to blacklist."
-		else:
-			print "Email was already blacklisted: " + email
-
-def sendemail(toEmail):
-	body = str(getBody())
-	yag.send(to = toEmail, subject = subjectContent, contents = [body, cvLocation])
-
-def visitURL(url):
-	a = urllib2.urlopen(url)
-	b = a.read(a)
-	return b
-
-def getEmailsFromURL(url):
-	a = visitURL(url)
-	b = list(set(re.findall(r'[\w\.-]+@[\w\.-]+\.[\w]+',  a)))
-	if len(b): print "..."
-	return b
-
-def findEmails():
-	emailList, emailResults = [], []
-	global goToPage
-	del allLinks[:] # Start from scratch on every page
-	
-	parser = MyHTMLParser()
-	parser.feed(visitURL(goToPage))
-
-	for website in allLinks:
-		emailList = getEmailsFromURL(website)
-		emailResults = emailResults + emailList
-
-	emailResults = list(set(emailResults)) # Remove dupes
-	print "These are all the emails found " + "(" + str(len(emailResults)) + "): " + ", ".join(emailResults)
-
-	for email in emailResults: blacklist(email)
-
-	if searchMode == 'flow':
-		goToPage = 'http://www.arbetsformedlingen.se/' + newPage
-		print "Searching new page..."
-		findEmails()
-	else: print "Finished with everything, I will quit now."
-
-testFirst = raw_input('Do you want to test that your email looks OK by emailing yourself once? If so, write your email here, or hit enter to continue anyway: ')
-if testFirst:
-	sendemail(testFirst)
-	print "Please check your email before continuing"
-
-a = raw_input('Please confirm that you want to start sending emails, by writing YES in capital letters: ')
-if a == "YES": findEmails()
-else: sys.exit('Okay. Bye!')
+getSettings()
