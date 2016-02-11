@@ -15,37 +15,43 @@ def cleanFile():
 	for line in set(lines):
 		if line.strip != "":
 			f.write(line)
-	print "\nRemoving duplicates from results file."
+	return "\nRemoving duplicates from results file."
 
-def raw_input_need (question):
-	answer = ""
-	while not answer: answer = raw_input(question)
-	return answer
+#def raw_input_need (question):
+#	answer = ""
+#	while not answer: answer = raw_input(question)
+#	return answer
 
 def getEmails (url):
 	emails = list(set(re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}", urllib2.urlopen(url).read())))
-	return [s for s in emails if not "@academicwork" in s and not "@proffice.se" in s]
+	return [s for s in emails if not "@academicwork" in s and not "@proffice.se" in s and not "@stockholm.se" in s]
+
+def getMode(searchMode, pageNumber):
+	if searchMode == "flow":
+		return "\nContinuous search (page " + pageNumber + ") ...\n"
+	else:
+		return "\nSingle page search...\n"
 
 def startSearch (searchPage):
 	try:
 		soup = BeautifulSoup(urllib2.urlopen(searchPage).read(), "html5lib")
 
 		try:
-			nextPage = "http://www.arbetsformedlingen.se" + soup.findAll("a", {"title": "Gå till nästa sida"})[0]["href"]
-			pageNumber = " (page " + str(int(nextPage.split("sida%28")[1].split("%")[0]) - 1) + ") "
+			nextPage	= "http://www.arbetsformedlingen.se" + soup.findAll("a", {"title": "Gå till nästa sida"})[0]["href"]
+			pageNumber	= str(int(nextPage.split("sida%28")[1].split("%")[0]) - 1)
 		except: nextPage, pageNumber = "", ""
 
-		if searchMode == "flow": print "\nContinuous search" + pageNumber + "...\n"
-		else: print "\nSingle page search...\n"
+		print getMode(searchMode, pageNumber)
 
 		for link in soup.findAll("a", { "shape": "rect", "href": True, "style": True, "title": True, "id": True }):
 			if "ctl00_mainCPH_ResultatlistaVy_Resultatlista_ct" in link["id"]:
 				for email in getEmails("http://www.arbetsformedlingen.se" + link["href"]): writeToFile(email)
 
-		cleanFile()
+		print cleanFile()
 		if searchMode == "flow" and nextPage:
 			startSearch(nextPage)
-		else: print "\nFinished! Thank you. All results saved to 'results'."
+		else:
+			print "\nFinished! Thank you. All results saved to 'results'."
 #	except: traceback.print_exc() # Debug
 	except Exception, e:
 		print "Something broke: %s" % e
