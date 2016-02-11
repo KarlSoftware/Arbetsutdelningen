@@ -31,7 +31,7 @@ def startSearch (searchPage):
 		soup = BeautifulSoup(urllib2.urlopen(searchPage).read(), "html5lib")
 
 		try:
-			nextPage = "http://www.arbetsformedlingen.se" + soup.findAll("a", {"title": "GÃ¥ till nÃ¤sta sida"})[0]["href"]
+			nextPage = "http://www.arbetsformedlingen.se" + soup.findAll("a", {"title": "Gå till nästa sida"})[0]["href"]
 			pageNumber = " (page " + str(int(nextPage.split("sida%28")[1].split("%")[0]) - 1) + ") "
 		except: nextPage, pageNumber = "", ""
 
@@ -53,9 +53,10 @@ def startSearch (searchPage):
 
 def getSettings():
 	global searchPage, searchMode
-	keyWords  = raw_input("\nWrite some keywords for jobs you are looking for (elektriker, diskare, etc):\n")
-	searchPage = "http://www.arbetsformedlingen.se/For-arbetssokande/Lediga-jobb.html?url=-123388378%2FNy%2FSokPlatsannonser%2FSokPlatsannonser.aspx%3Fq%3Ds(sn(" + keyWords.replace(" ", "%2B") + ")utl(1)go(1)ao(180))%26ps%3D&sv.url=12.237ec53d11d47b612d78000171"
-	searchMode = raw_input("\nType 'flow' to search continuously, or hit enter to search a single page (20 ads per page):\n") or "once"
+	keyWords	= raw_input("\nWrite some keywords for jobs you are looking for (elektriker, diskare, etc):\n")
+	keyWords	= keyWords.replace(" ", "%2B").replace("å", "%2525c3%2525a5").replace("ä", "%2525c3%2525a4").replace("ö", "%2525c3%2525b6")
+	searchPage	= "http://www.arbetsformedlingen.se/For-arbetssokande/Lediga-jobb.html?url=-123388378%2FNy%2FSokPlatsannonser%2FSokPlatsannonser.aspx%3Fq%3Ds(sn(" + keyWords + ")utl(1)go(1)ao(180))%26ps%3D&sv.url=12.237ec53d11d47b612d78000171"
+	searchMode	= raw_input("\nType 'flow' to search continuously, or hit enter to search a single page (20 ads per page):\n") or "once"
 	startSearch(searchPage)
 
 getSettings()
